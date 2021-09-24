@@ -1,0 +1,18 @@
+From: %mail-from%
+To: %mail-to%
+Date: %now-rfc2822%
+Subject: %summary%
+Message-ID: <icsinviter-%now-iso%-%uid%>
+Content-Type: multipart/alternative; boundary=emlfile
+
+--emlfile
+Content-Type: text/plain; charset=utf-8
+
+%summary%
+
+--emlfile
+Content-Type: text/calendar; charset=utf-8; method=CANCEL
+
+%ics%
+
+--emlfile--

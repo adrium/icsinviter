@@ -1,0 +1,19 @@
+{
+	"events": "events.json",
+	"dtstartfilter": "%Y%m%d",
+	"cmd": {
+		"sendmail": ["cat"],
+		"sendmail-live": ["sendmail", "-t"],
+		"download": ["curl", "-s"]
+	},
+	"var": {
+		"mail-from": "mailer@example.com"
+	},
+	"template": {
+		"request": "request.eml",
+		"cancel": "cancel.eml"
+	},
+	"feeds": {
+		"user@example.com": "https://www.calendarlabs.com/ical-calendar/ics/76/US_Holidays.ics"
+	}
+}
