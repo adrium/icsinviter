@@ -74,24 +74,17 @@ def main():
 	saveJson(config['events'], newevents)
 
 def render(template: str, vars: dict, icsfile: dict) -> str:
+	if (icsfile['vevent'][0]['dtstart'] < vars['dtstartfilter']):
+		return ''
 
 	vars.update(icsfile)
 	vars.update(icsfile['vevent'][0])
 
-	if (icsfile['vevent'][0]['dtstart'] < vars['dtstartfilter']):
-		return ''
-
 	vars['ics'] = dictToImc({ 'vcalendar': [ icsfile ] })
 
-	result = interpolate(template, vars)
+	result = template.format(**vars)
 
 	return result
-
-def interpolate(s: str, x: dict) -> str:
-	for k, v in x.items():
-		if isinstance(v, str):
-			s = s.replace(f'%{k}%', v)
-	return s
 
 def loadJson(file: str) -> dict:
 	result = {}
