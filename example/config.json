@@ -2,7 +2,7 @@
 	"events": "events.json",
 	"dtstartfilter": "%Y%m%d",
 	"cmd": {
-		"sendmail": ["cat"],
+		"sendmail": ["tee", "-a", "output.eml"],
 		"sendmail-live": ["sendmail", "-t"],
 		"download": ["curl", "-s"]
 	},

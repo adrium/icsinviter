@@ -2,9 +2,7 @@ import json
 import subprocess
 import time
 
-def main():
-
-	config = loadJson('config.json')
+def main(config: dict):
 
 	events = loadJson(config['events'])
 	emlRequest = loadFile(config['template']['request'])
@@ -58,7 +56,7 @@ def main():
 
 			mailtext = render(emlRequest, templatevars, icsfile)
 			if mailtext != '':
-				p = subprocess.run(config['cmd']['sendmail'], input = mailtext.encode('utf8'))
+				p = subprocess.run(config['cmd']['sendmail'], input = mailtext.encode('utf8'), stdout = subprocess.PIPE)
 
 		for uid in tocancel.keys():
 
@@ -69,7 +67,7 @@ def main():
 
 			mailtext = render(emlCancel, templatevars, icsfile)
 			if mailtext != '':
-				p = subprocess.run(config['cmd']['sendmail'], input = mailtext.encode('utf8'))
+				p = subprocess.run(config['cmd']['sendmail'], input = mailtext.encode('utf8'), stdout = subprocess.PIPE)
 
 	saveJson(config['events'], newevents)
 
@@ -100,7 +98,6 @@ def loadFile(filename: str) -> str:
 	result = ''
 	with open(filename) as f:
 		result = f.read()
-
 	return result
 
 def imcToDict(imc: str) -> dict:
@@ -189,4 +186,5 @@ def dictToImc(imcdict: dict) -> str:
 
 	return result
 
-main()
+if __name__ == '__main__':
+	main(loadJson('config.json'))
