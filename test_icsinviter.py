@@ -24,8 +24,8 @@ class Testing(unittest.TestCase):
 			'object': [ {
 				'foo': 'BAR',
 				'long': 'start:\nlongline longline longline longline longline longline longline longline longline longline',
-				'test': 'Ok:Good',
-				'test;type=str': 'Val',
+				'test': 'Val',
+				'test_p': { 'type': 'Str' },
 				'sub': [ { 'x': 'X' } ],
 			} ]
 		}
@@ -40,8 +40,8 @@ class Testing(unittest.TestCase):
 			'object': [ {
 				'foo': 'BAR',
 				'long': 'start:\nlongline longline longline longline longline longline longline longline longline longline',
-				'test': 'Ok:Good',
-				'test;type=str': 'Val',
+				'test': 'Val',
+				'test_p': { 'type': 'Str' },
 				'sub': [ { 'x': 'X' } ],
 			} ]
 		}
@@ -50,8 +50,7 @@ class Testing(unittest.TestCase):
 			'FOO:BAR\n'
 			'LONG:start:\\nlongline longline longline longline longline longli\n'
 			' ne longline longline longline longline\n'
-			'TEST:Ok:Good\n'
-			'TEST;TYPE=STR:Val\n'
+			'TEST;TYPE=Str:Val\n'
 			'BEGIN:SUB\n'
 			'X:X\n'
 			'END:SUB\n'

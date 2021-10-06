@@ -103,7 +103,7 @@ def loadFile(filename: str) -> str:
 	with open(filename) as f:
 		return f.read()
 
-def imcToDict(imc: str) -> dict:
+def imcToDict(imc: str, suffix: str = '_p') -> dict:
 	lines = []
 	line = ''
 
@@ -119,29 +119,30 @@ def imcToDict(imc: str) -> dict:
 		if line == '':
 			continue
 
-		[k, v] = line.split(':', maxsplit = 1)
-
-		k = k.lower()
+		k, v = line.split(':', maxsplit = 1)
 		v = v.replace('\\n', '\n')
+		p = k.split(';')
+		k = p[0].lower()
+		p = { pk.lower(): pv for ps in p[1:] for pk, pv in [ ps.split('=', maxsplit = 1) ] }
 
-		lines += [(k, v)]
+		lines += [(k, v, p)]
 		line = ''
 
 	lines.reverse()
 
-	result = imcToDictTreeImpl(None, iter(lines))
+	result = imcToDictTreeImpl(None, suffix, iter(lines))
 	return result
 
-def imcToDictTreeImpl(scope: str, it) -> dict:
+def imcToDictTreeImpl(scope: str, suffix: str, it) -> dict:
 	result = {}
 
 	while (x := next(it, None)) != None:
 
-		k, v = x
+		k, v, p = x
 
 		if k == 'begin':
 			k = v.lower()
-			v = imcToDictTreeImpl(k, it)
+			v = imcToDictTreeImpl(k, suffix, it)
 
 			if not k in result:
 				result[k] = []
@@ -158,17 +159,22 @@ def imcToDictTreeImpl(scope: str, it) -> dict:
 
 		else:
 			result[k] = v
+			if p != {}:
+				result[k + suffix] = p
 
 	if scope != None:
 		raise TypeError('Missing END tag')
 
 	return result
 
-def dictToImc(imcdict: dict) -> str:
+def dictToImc(imcdict: dict, suffix: str = '_p') -> str:
 
 	result = ''
 
 	for k, v in imcdict.items():
+		if k.endswith(suffix):
+			continue
+
 		if isinstance(v, list):
 			for d in v:
 				result += f'BEGIN:{k.upper()}\n'
@@ -176,8 +182,12 @@ def dictToImc(imcdict: dict) -> str:
 				result += f'END:{k.upper()}\n'
 			continue
 
-		k = k.upper()
+		p = imcdict[k + suffix] if k + suffix in imcdict else {}
 		v = v.replace('\n', '\\n')
+		k = k.upper()
+
+		for pk, pv in p.items():
+			k += f';{pk.upper()}={pv}'
 
 		line = f'{k}:{v}'
 
