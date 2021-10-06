@@ -1,3 +1,4 @@
+import glob
 import json
 import subprocess
 import time
@@ -84,21 +85,23 @@ def render(template: str, vars: dict, icsfile: dict) -> str:
 
 	return result
 
-def loadJson(file: str) -> dict:
+def loadConfig(files: str):
 	result = {}
-	with open(file) as f:
-		result.update(json.load(f))
+	for file in glob.glob(files):
+		result.update(loadJson(file))
 	return result
+
+def loadJson(file: str) -> dict:
+	with open(file) as f:
+		return json.load(f)
 
 def saveJson(file: str, x: dict):
 	with open(file, 'w') as f:
 		json.dump(x, f, indent = 2)
 
 def loadFile(filename: str) -> str:
-	result = ''
 	with open(filename) as f:
-		result = f.read()
-	return result
+		return f.read()
 
 def imcToDict(imc: str) -> dict:
 	lines = []
@@ -187,4 +190,4 @@ def dictToImc(imcdict: dict) -> str:
 	return result
 
 if __name__ == '__main__':
-	main(loadJson('config.json'))
+	main(loadConfig('config/*.json'))
