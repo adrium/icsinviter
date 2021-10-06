@@ -17,11 +17,15 @@ def main(config: dict):
 	templatevars.update(config['var'])
 
 	for mail, url in config['feeds'].items():
-
-		p = subprocess.run(config['cmd']['download'] + [url], stdout = subprocess.PIPE)
-		icsfeed = p.stdout.decode('utf8')
-		icsfeed = imcToDict(icsfeed)
-		icsfeed = icsfeed['vcalendar'][0]
+		icsfeed, err = exec(config['cmd']['download'] + [url])
+		try:
+			icsfeed = imcToDict(icsfeed)
+			icsfeed = icsfeed['vcalendar'][0]
+		except Exception as e:
+			# feed could not be loaded and previous events will be remembered
+			if mail in events:
+				newevents[mail] = events[mail]
+			continue
 
 		templatevars['mail-to'] = mail
 
@@ -29,21 +33,20 @@ def main(config: dict):
 		icsfile.update(icsfeed)
 		del icsfile['vevent']
 
-		tocancel = {}
+		tocancel = { uid: True for uid in events[mail].keys() } if mail in events else {}
 		newevents[mail] = {}
-
-		if mail in events:
-			for uid in events[mail].keys():
-				tocancel[uid] = True
 
 		for event in icsfeed['vevent']:
 
 			uid = event['uid']
 
 			if event['dtstart'] < templatevars['dtstartfilter']:
-				continue
+				continue # event in the past
 
-			newevents[mail][uid] = event
+			if mail in events and uid in events[mail]:
+				del tocancel[uid]
+				newevents[mail][uid] = events[mail][uid]
+				continue # event already synchronized
 
 			event['organizer'] = 'mailto:' + templatevars["mail-from"]
 			event['attendee'] = 'mailto:' + templatevars["mail-to"]
@@ -51,13 +54,16 @@ def main(config: dict):
 			icsfile['method'] = 'REQUEST'
 			icsfile['vevent'] = [ event ]
 
-			if mail in events and uid in events[mail]:
-				del tocancel[uid]
-				continue
-
 			mailtext = render(emlRequest, templatevars, icsfile)
-			if mailtext != '':
-				p = subprocess.run(config['cmd']['sendmail'], input = mailtext.encode('utf8'), stdout = subprocess.PIPE)
+			if mailtext == '':
+				continue # event not relevant
+
+			_, err = exec(config['cmd']['sendmail'], mailtext)
+			if err != '':
+				continue # event could not be sent
+
+			# event sent successfully and added to synchronized list
+			newevents[mail][uid] = event
 
 		for uid in tocancel.keys():
 
@@ -67,8 +73,13 @@ def main(config: dict):
 			icsfile['vevent'][0]['sequence'] = '1'
 
 			mailtext = render(emlCancel, templatevars, icsfile)
-			if mailtext != '':
-				p = subprocess.run(config['cmd']['sendmail'], input = mailtext.encode('utf8'), stdout = subprocess.PIPE)
+			if mailtext == '':
+				continue # event not relevant
+
+			_, err = exec(config['cmd']['sendmail'], mailtext)
+			if err != '':
+				# event could not be cancelled and kept in synchronized list
+				newevents[mail][uid] = event
 
 	saveJson(config['events'], newevents)
 
@@ -83,6 +94,14 @@ def render(template: str, vars: dict, icsfile: dict) -> str:
 
 	result = template.format(**vars)
 
+	return result
+
+def exec(cmd: list, input: str = ''):
+	pipe = subprocess.PIPE
+	p = subprocess.run(cmd, input = input.encode('utf8'), stdout = pipe, stderr = pipe)
+	result = (p.stdout.decode('utf8'), p.stderr.decode('utf8'))
+	if p.returncode != 0 and result[1] == '':
+		result = (result[0], 'Process returned %d' % p.returncode)
 	return result
 
 def loadConfig(files: str):

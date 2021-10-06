@@ -61,6 +61,19 @@ class Testing(unittest.TestCase):
 
 		self.assertEqual(result, expected)
 
+	def test_exec(self):
+		out, err = icsinviter.exec(['sh', '-c', 'echo hello'])
+		self.assertEqual(out, 'hello\n')
+		self.assertEqual(err, '')
+
+		out, err = icsinviter.exec(['sh', '-c', 'exit 2'])
+		self.assertEqual(out, '')
+		self.assertEqual(err, 'Process returned 2')
+
+		out, err = icsinviter.exec(['sh', '-c', 'echo hello; echo error 1>&2; exit 2'])
+		self.assertEqual(out, 'hello\n')
+		self.assertEqual(err, 'error\n')
+
 	def test_main(self):
 		self.maxDiff = None
 
