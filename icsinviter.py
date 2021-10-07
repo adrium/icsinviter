@@ -1,5 +1,6 @@
 import glob
 import json
+import re
 import subprocess
 import time
 
@@ -11,8 +12,8 @@ def main(config: dict):
 	newevents = {}
 
 	templatevars = {}
-	templatevars['now-rfc2822'] = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
-	templatevars['now-iso'] = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
+	templatevars['now_rfc2822'] = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
+	templatevars['now_iso'] = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
 	templatevars['dtstartfilter'] = time.strftime(config['dtstartfilter'], time.gmtime())
 	templatevars.update(config['var'])
 
@@ -27,7 +28,7 @@ def main(config: dict):
 				newevents[mail] = events[mail]
 			continue
 
-		templatevars['mail-to'] = mail
+		templatevars['mail_to'] = mail
 
 		icsfile = {'vevent': []}
 		icsfile.update(icsfeed)
@@ -48,11 +49,16 @@ def main(config: dict):
 				newevents[mail][uid] = events[mail][uid]
 				continue # event already synchronized
 
-			event['organizer'] = 'mailto:' + templatevars["mail-from"]
-			event['attendee'] = 'mailto:' + templatevars["mail-to"]
-
 			icsfile['method'] = 'REQUEST'
 			icsfile['vevent'] = [ event ]
+
+			for k, update in config['update'].items():
+				if 'set' in update:
+					event[k] = update['set']
+				if 'render' in update:
+					event[k] = render(update['render'], templatevars, icsfile)
+				if 'pattern' in update:
+					event[k] = re.sub(update['pattern'], update['repl'], event[k], flags = re.S)
 
 			mailtext = render(emlRequest, templatevars, icsfile)
 			if mailtext == '':
@@ -87,12 +93,14 @@ def render(template: str, vars: dict, icsfile: dict) -> str:
 	if (icsfile['vevent'][0]['dtstart'] < vars['dtstartfilter']):
 		return ''
 
-	vars.update(icsfile)
-	vars.update(icsfile['vevent'][0])
+	v = {}
+	v.update(vars)
+	v.update(icsfile)
+	v.update(icsfile['vevent'][0])
 
-	vars['ics'] = dictToImc({ 'vcalendar': [ icsfile ] })
+	v['ics'] = dictToImc({ 'vcalendar': [ icsfile ] })
 
-	result = template.format(**vars)
+	result = template.format(**v)
 
 	return result
 

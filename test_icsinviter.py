@@ -86,7 +86,13 @@ class Testing(unittest.TestCase):
 				'download': ['cat'],
 			},
 			'var': {
-				'mail-from': 'mailer@example.com'
+				'mail_from': 'mailer@example.com'
+			},
+			'update': {
+				'summary': { 'render': '{description}', 'pattern': r'([\w-]+).+', 'repl': r'Shift \1' },
+				'organizer': { 'render': 'mailto:{mail_from}' },
+				'attendee': { 'render': 'mailto:{mail_to}' },
+				'attendee_p': { 'set': { 'rsvp': 'FALSE' } },
 			},
 			'events': tmpfiles[1],
 			'feeds': {
@@ -135,6 +141,7 @@ class Testing(unittest.TestCase):
 				},
 				{
 					'summary': 'event will be sent',
+					'description': 'E-SOC-8 --\nLocation: Zurich --\n',
 					'dtstart': '20301010',
 					'uid': 'id.new',
 				},
@@ -143,20 +150,23 @@ class Testing(unittest.TestCase):
 
 		self.saveFile(tmpfiles[2], icsinviter.dictToImc(data))
 
-		data = '{mail-from} {mail-to} {uid} {summary}\n{ics}\n'
+		data = '{mail_from} {mail_to} {uid} {summary}\n{ics}\n'
 		self.saveFile(tmpfiles[3], 'REQUEST:' + data)
 		self.saveFile(tmpfiles[4], 'CANCEL:' + data)
 
 		expected = (
-			'REQUEST:mailer@example.com user@example.com id.new event will be sent\n'
+			'REQUEST:mailer@example.com user@example.com id.new Shift E-SOC-8\n'
 			'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:Test\nMETHOD:REQUEST\n'
-			'BEGIN:VEVENT\nSUMMARY:event will be sent\nDTSTART:20301010\nUID:id.new\n'
-			'ORGANIZER:mailto:mailer@example.com\nATTENDEE:mailto:user@example.com\nEND:VEVENT\nEND:VCALENDAR\n'
+			'BEGIN:VEVENT\nSUMMARY:Shift E-SOC-8\n'
+			'DESCRIPTION:E-SOC-8 --\\nLocation: Zurich --\\n\nDTSTART:20301010\nUID:id.new\n'
+			'ORGANIZER:mailto:mailer@example.com\n'
+			'ATTENDEE;RSVP=FALSE:mailto:user@example.com\nEND:VEVENT\nEND:VCALENDAR\n'
 			'\n'
 			'CANCEL:mailer@example.com user@example.com id.cancel event will be cancelled\n'
 			'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:Test\nMETHOD:CANCEL\n'
 			'BEGIN:VEVENT\nSUMMARY:event will be cancelled\nDTSTART:20301010\nUID:id.cancel\n'
-			'ORGANIZER:mailto:mailer@example.com\nATTENDEE:mailto:user@example.com\nSTATUS:CANCELLED\nSEQUENCE:1\nEND:VEVENT\nEND:VCALENDAR\n'
+			'ORGANIZER:mailto:mailer@example.com\n'
+			'ATTENDEE:mailto:user@example.com\nSTATUS:CANCELLED\nSEQUENCE:1\nEND:VEVENT\nEND:VCALENDAR\n'
 			'\n'
 		)
 

@@ -7,7 +7,13 @@
 		"download": ["curl", "-s"]
 	},
 	"var": {
-		"mail-from": "mailer@example.com"
+		"mail_from": "mailer@example.com"
+	},
+	"update": {
+		"url": { "render": "{description}", "pattern": "Visit.(http\\S+).*", "repl": "\\1" },
+		"organizer": { "render": "mailto:{mail_from}" },
+		"attendee": { "render": "mailto:{mail_to}" },
+		"attendee_p": { "set": { "rsvp": "FALSE" } }
 	},
 	"template": {
 		"request": "request.eml",
