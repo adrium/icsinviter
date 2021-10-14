@@ -9,6 +9,7 @@
 	"var": {
 		"mail_from": "mailer@example.com"
 	},
+	"compare": [ "dtstart", "dtend" ],
 	"update": {
 		"url": { "render": "{description}", "pattern": "Visit.(http\\S+).*", "repl": "\\1" },
 		"organizer": { "render": "mailto:{mail_from}" },

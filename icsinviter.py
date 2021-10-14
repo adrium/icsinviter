@@ -46,8 +46,14 @@ def main(config: dict):
 
 			if mail in events and uid in events[mail]:
 				del tocancel[uid]
-				newevents[mail][uid] = events[mail][uid]
-				continue # event already synchronized
+				issame = True
+				for k in config['compare']:
+					issame = issame and events[mail][uid][k] == event[k]
+				if issame:
+					newevents[mail][uid] = events[mail][uid]
+					continue # event already synchronized
+				else:
+					event['sequence'] = str(1 + int(events[mail][uid].get('sequence', '0')))
 
 			icsfile['method'] = 'REQUEST'
 			icsfile['vevent'] = [ event ]
@@ -76,7 +82,7 @@ def main(config: dict):
 			icsfile['method'] = 'CANCEL'
 			icsfile['vevent'] = [ events[mail][uid] ]
 			icsfile['vevent'][0]['status'] = 'CANCELLED'
-			icsfile['vevent'][0]['sequence'] = '1'
+			icsfile['vevent'][0]['sequence'] = str(1 + int(icsfile['vevent'][0].get('sequence', '0')))
 
 			mailtext = render(emlCancel, templatevars, icsfile)
 			if mailtext == '':

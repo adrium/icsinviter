@@ -88,6 +88,7 @@ class Testing(unittest.TestCase):
 			'var': {
 				'mail_from': 'mailer@example.com'
 			},
+			'compare': [ 'dtstart' ],
 			'update': {
 				'summary': { 'render': '{description}', 'pattern': r'([\w-]+).+', 'repl': r'Shift \1' },
 				'organizer': { 'render': 'mailto:{mail_from}' },
@@ -109,6 +110,12 @@ class Testing(unittest.TestCase):
 				'summary': 'event will not be sent again',
 				'dtstart': '20301010',
 				'uid': 'id.existing',
+			},
+			'id.update': {
+				'summary': 'event needs update',
+				'dtstart': '20301010',
+				'uid': 'id.update',
+				'sequence': '2',
 			},
 			'id.nocancel': {
 				'summary': 'event is in the past',
@@ -145,6 +152,12 @@ class Testing(unittest.TestCase):
 					'dtstart': '20301010',
 					'uid': 'id.new',
 				},
+				{
+					'summary': 'event needs update',
+					'description': 'Updated!',
+					'dtstart': '20301020',
+					'uid': 'id.update',
+				},
 			]
 		} ] }
 
@@ -159,6 +172,13 @@ class Testing(unittest.TestCase):
 			'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:Test\nMETHOD:REQUEST\n'
 			'BEGIN:VEVENT\nSUMMARY:Shift E-SOC-8\n'
 			'DESCRIPTION:E-SOC-8 --\\nLocation: Zurich --\\n\nDTSTART:20301010\nUID:id.new\n'
+			'ORGANIZER:mailto:mailer@example.com\n'
+			'ATTENDEE;RSVP=FALSE:mailto:user@example.com\nEND:VEVENT\nEND:VCALENDAR\n'
+			'\n'
+			'REQUEST:mailer@example.com user@example.com id.update Shift Updated\n'
+			'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:Test\nMETHOD:REQUEST\n'
+			'BEGIN:VEVENT\nSUMMARY:Shift Updated\n'
+			'DESCRIPTION:Updated!\nDTSTART:20301020\nUID:id.update\nSEQUENCE:3\n'
 			'ORGANIZER:mailto:mailer@example.com\n'
 			'ATTENDEE;RSVP=FALSE:mailto:user@example.com\nEND:VEVENT\nEND:VCALENDAR\n'
 			'\n'
