@@ -18,12 +18,16 @@ def main(config: dict):
 	templatevars.update(config['var'])
 
 	for mail, url in config['feeds'].items():
+		print(f'Getting feed {mail}: {url}')
 		icsfeed, err = exec(config['cmd']['download'] + [url])
+		if err != '':
+			print(f'Error downloading {err.strip()}')
 		try:
+			err = icsfeed.replace('\n', ' ')
 			icsfeed = imcToDict(icsfeed)
 			icsfeed = icsfeed['vcalendar'][0]
 		except Exception as e:
-			# feed could not be loaded and previous events will be remembered
+			print(f'Error parsng {err[0:16]}...')
 			if mail in events:
 				newevents[mail] = events[mail]
 			continue
@@ -68,13 +72,15 @@ def main(config: dict):
 
 			mailtext = render(emlRequest, templatevars, icsfile)
 			if mailtext == '':
-				continue # event not relevant
+				print(f'Ignoring {icsfile["method"]} {uid} ({event["summary"]} on {event["dtstart"]})')
+				continue
 
 			_, err = exec(config['cmd']['sendmail'], mailtext)
 			if err != '':
-				continue # event could not be sent
+				print(f'Error {icsfile["method"]} {uid} ({event["summary"]} on {event["dtstart"]}): {err}')
+				continue
 
-			# event sent successfully and added to synchronized list
+			print(f'Sent {icsfile["method"]} {uid} ({event["summary"]} on {event["dtstart"]})')
 			newevents[mail][uid] = event
 
 		for uid in tocancel.keys():
@@ -90,13 +96,16 @@ def main(config: dict):
 
 			mailtext = render(emlCancel, templatevars, icsfile)
 			if mailtext == '':
-				continue # event not relevant
+				print(f'Ignoring {icsfile["method"]} {uid} ({event["summary"]} on {event["dtstart"]})')
+				continue
 
 			_, err = exec(config['cmd']['sendmail'], mailtext)
 			if err != '':
-				# event could not be cancelled and kept in synchronized list
+				print(f'Error {icsfile["method"]} {uid} ({event["summary"]} on {event["dtstart"]}): {err}')
 				newevents[mail][uid] = events[mail][uid]
 				continue
+
+			print(f'Sent {icsfile["method"]} {uid} ({event["summary"]} on {event["dtstart"]})')
 
 	saveJson(config['events'], newevents)
 
