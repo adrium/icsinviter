@@ -79,10 +79,14 @@ def main(config: dict):
 
 		for uid in tocancel.keys():
 
+			event = {}
+			event.update(events[mail][uid])
+
 			icsfile['method'] = 'CANCEL'
-			icsfile['vevent'] = [ events[mail][uid] ]
-			icsfile['vevent'][0]['status'] = 'CANCELLED'
-			icsfile['vevent'][0]['sequence'] = str(1 + int(icsfile['vevent'][0].get('sequence', '0')))
+			icsfile['vevent'] = [ event ]
+
+			event['status'] = 'CANCELLED'
+			event['sequence'] = str(1 + int(event.get('sequence', '0')))
 
 			mailtext = render(emlCancel, templatevars, icsfile)
 			if mailtext == '':
@@ -91,7 +95,8 @@ def main(config: dict):
 			_, err = exec(config['cmd']['sendmail'], mailtext)
 			if err != '':
 				# event could not be cancelled and kept in synchronized list
-				newevents[mail][uid] = event
+				newevents[mail][uid] = events[mail][uid]
+				continue
 
 	saveJson(config['events'], newevents)
 
