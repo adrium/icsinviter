@@ -81,6 +81,7 @@ class Testing(unittest.TestCase):
 
 		config = {
 			'dtstartfilter': '%Y%m%d',
+			'uid': 'uid',
 			'cmd': {
 				'sendmail': ['tee', '-a', tmpfiles[0]],
 				'download': ['cat'],

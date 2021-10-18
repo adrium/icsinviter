@@ -39,7 +39,7 @@ def main(config: dict):
 
 		for event in icsfeed['vevent']:
 
-			uid = event['uid']
+			uid = event[config['uid']]
 
 			if event['dtstart'] < templatevars['dtstartfilter']:
 				continue # event in the past
