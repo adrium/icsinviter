@@ -41,7 +41,7 @@ def main(config: dict):
 		tocancel = { uid: True for uid in events[mail].keys() } if mail in events else {}
 		newevents[mail] = {}
 
-		for event in icsfeed['vevent']:
+		for event in icsfeed.get('vevent', []):
 
 			uid = event[config['uid']]
 
