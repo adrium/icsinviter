@@ -18,16 +18,16 @@ def main(config: dict):
 	templatevars.update(config['var'])
 
 	for mail, url in config['feeds'].items():
-		print(f'Getting feed {mail}: {url}')
+		logFeed('get', mail, url)
 		icsfeed, err = exec(config['cmd']['download'] + [url])
 		if err != '':
-			print(f'Error downloading {err.strip()}')
+			logFeed('download', mail, url, err.strip())
 		try:
 			err = icsfeed.replace('\n', ' ')
 			icsfeed = imcToDict(icsfeed)
 			icsfeed = icsfeed['vcalendar'][0]
 		except Exception as e:
-			print(f'Error parsng {err[0:16]}...')
+			logFeed('parse', mail, url, err[0:48])
 			if mail in events:
 				newevents[mail] = events[mail]
 			continue
@@ -71,16 +71,17 @@ def main(config: dict):
 					event[k] = re.sub(update['pattern'], update['repl'], event[k], flags = re.S)
 
 			mailtext = render(emlRequest, templatevars, icsfile)
+
 			if mailtext == '':
-				print(f'Ignoring {icsfile["method"]} {uid} ({event["summary"]} on {event["dtstart"]})')
+				logEvent('ignore', mail, icsfile)
 				continue
 
 			_, err = exec(config['cmd']['sendmail'], mailtext)
 			if err != '':
-				print(f'Error {icsfile["method"]} {uid} ({event["summary"]} on {event["dtstart"]}): {err}')
+				logEvent('sendmail', mail, icsfile, err.strip())
 				continue
 
-			print(f'Sent {icsfile["method"]} {uid} ({event["summary"]} on {event["dtstart"]})')
+			logEvent('ok', mail, icsfile)
 			newevents[mail][uid] = event
 
 		for uid in tocancel.keys():
@@ -96,16 +97,16 @@ def main(config: dict):
 
 			mailtext = render(emlCancel, templatevars, icsfile)
 			if mailtext == '':
-				print(f'Ignoring {icsfile["method"]} {uid} ({event["summary"]} on {event["dtstart"]})')
+				logEvent('ignore', mail, icsfile)
 				continue
 
 			_, err = exec(config['cmd']['sendmail'], mailtext)
 			if err != '':
-				print(f'Error {icsfile["method"]} {uid} ({event["summary"]} on {event["dtstart"]}): {err}')
+				logEvent('sendmail', mail, icsfile, err.strip())
 				newevents[mail][uid] = events[mail][uid]
 				continue
 
-			print(f'Sent {icsfile["method"]} {uid} ({event["summary"]} on {event["dtstart"]})')
+			logEvent('ok', mail, icsfile)
 
 	saveJson(config['events'], newevents)
 
@@ -131,6 +132,14 @@ def exec(cmd: list, input: str = ''):
 	if p.returncode != 0 and result[1] == '':
 		result = (result[0], 'Process returned %d' % p.returncode)
 	return result
+
+def logFeed(error, mail, url, detail = None):
+	print(json.dumps({ 'action': error, 'mail': mail, 'url': url, 'detail': detail }))
+
+def logEvent(error, mail, icsfile, detail = None):
+	e = icsfile['vevent'][0]
+	print(json.dumps({ 'action': error, 'method': icsfile['method'],
+		'uid': e['uid'], 'dtstart': e['dtstart'], 'summary': e['summary'], 'mail': mail, 'detail': detail }))
 
 def loadConfig(files: str):
 	result = {}
