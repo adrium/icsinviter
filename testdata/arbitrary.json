@@ -1,0 +1,12 @@
+{
+ "object": [ {
+  "foo": "BAR",
+  "long": "start:\nlongline longline longline longline longline longline longline longline longline longline",
+  "test": "Val",
+  "test_p": { "type": "Str" },
+  "sub": [
+   { "x": "X" },
+   { "x": "Y" }
+  ]
+ } ]
+}

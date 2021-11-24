@@ -50,13 +50,14 @@ def main(config: dict):
 
 			if mail in events and uid in events[mail]:
 				del tocancel[uid]
+				newevents[mail][uid] = events[mail][uid]
 				issame = True
 				for k in config['compare']:
 					issame = issame and events[mail][uid][k] == event[k]
 				if issame:
-					newevents[mail][uid] = events[mail][uid]
 					continue # event already synchronized
 				else:
+					event['uid'] = events[mail][uid]['uid']
 					event['sequence'] = str(1 + int(events[mail][uid].get('sequence', '0')))
 
 			icsfile['method'] = 'REQUEST'

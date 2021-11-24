@@ -1,0 +1,13 @@
+BEGIN:OBJECT
+FOO:BAR
+LONG:start:\nlongline longline longline longline longline longli
+ ne longline longline longline longline
+TEST:Missing
+TEST;TYPE=Str:Val
+BEGIN:SUB
+X:X
+END:SUB
+BEGIN:SUB
+X:Y
+END:SUB
+END:OBJECT
