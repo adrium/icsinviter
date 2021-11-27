@@ -18,7 +18,6 @@ def main(config: dict):
 	templatevars.update(config['var'])
 
 	for mail, url in config['feeds'].items():
-		logFeed('get', mail, url)
 		icsfeed, err = exec(config['cmd']['download'] + [url])
 		if err != '':
 			logFeed('download', mail, url, err.strip())
@@ -32,6 +31,7 @@ def main(config: dict):
 				newevents[mail] = events[mail]
 			continue
 
+		logFeed('ok', mail, url)
 		templatevars['mail_to'] = mail
 
 		icsfile = {'vevent': []}
@@ -135,11 +135,11 @@ def exec(cmd: list, input: str = ''):
 	return result
 
 def logFeed(error, mail, url, detail = None):
-	print(json.dumps({ 'action': error, 'mail': mail, 'url': url, 'detail': detail }))
+	print(json.dumps({ 'error': error, 'url': url, 'mail': mail, 'detail': detail }))
 
 def logEvent(error, mail, icsfile, detail = None):
 	e = icsfile['vevent'][0]
-	print(json.dumps({ 'action': error, 'method': icsfile['method'],
+	print(json.dumps({ 'error': error, 'method': icsfile['method'],
 		'uid': e['uid'], 'dtstart': e['dtstart'], 'summary': e['summary'], 'mail': mail, 'detail': detail }))
 
 def loadConfig(files: str):
