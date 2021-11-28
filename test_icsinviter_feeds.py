@@ -11,15 +11,11 @@ class Testing(unittest.TestCase):
 		self.maxDiff = None
 		self.tmpfiles = [ tempfile.mkstemp()[1] for n in range(2) ]
 		self.config = {
-			'uid': 'uid',
 			'dtstartfilter': '2021',
 			'cmd': {
 				'sendmail': ['tee', '-a', self.tmpfiles[0]],
 				'download': ['cat'],
 			},
-			'var': {},
-			'update': {},
-			'compare': [],
 			'events': self.tmpfiles[1],
 			'template': {
 				'request': 'testdata/template.txt',

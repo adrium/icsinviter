@@ -11,11 +11,12 @@ def main(config: dict):
 	emlCancel = loadFile(config['template']['cancel'])
 	newevents = {}
 
-	templatevars = {}
-	templatevars['now_rfc2822'] = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
-	templatevars['now_iso'] = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
-	templatevars['dtstartfilter'] = time.strftime(config['dtstartfilter'], time.gmtime())
-	templatevars.update(config['var'])
+	templatevars = config.get('var', {})
+	templatevars['dtstartfilter'] = config['dtstartfilter']
+
+	for k, v in templatevars.items():
+		if '%' in v:
+			templatevars[k] = time.strftime(v, time.gmtime())
 
 	for mail, url in config['feeds'].items():
 		icsfeed, err = exec(config['cmd']['download'] + [url])
@@ -43,7 +44,7 @@ def main(config: dict):
 
 		for event in icsfeed.get('vevent', []):
 
-			uid = event[config['uid']]
+			uid = event[config.get('uid', 'uid')]
 
 			if event['dtstart'] < templatevars['dtstartfilter']:
 				continue # event in the past
@@ -52,7 +53,7 @@ def main(config: dict):
 				del tocancel[uid]
 				newevents[mail][uid] = events[mail][uid]
 				issame = True
-				for k in config['compare']:
+				for k in config.get('compare', []):
 					issame = issame and events[mail][uid][k] == event[k]
 				if issame:
 					continue # event already synchronized
@@ -63,7 +64,7 @@ def main(config: dict):
 			icsfile['method'] = 'REQUEST'
 			icsfile['vevent'] = [ event ]
 
-			for k, update in config['update'].items():
+			for k, update in config.get('update', {}).items():
 				if 'set' in update:
 					event[k] = update['set']
 				if 'render' in update:
