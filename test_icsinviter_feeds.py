@@ -60,6 +60,11 @@ class Testing(unittest.TestCase):
 
 		self.assertOutput('testdata/humanity-live-result.txt')
 
+		events = testdata.helper.loadJson(self.config['events'])
+
+		self.assertEqual(len(events[mail]), 1)
+		self.assertIn('773212438.humanity.com', events[mail])
+
 	def testFeedDoodle(self):
 
 		mail = 'doodle@example.com'

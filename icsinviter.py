@@ -19,39 +19,37 @@ def main(config: dict):
 			templatevars[k] = time.strftime(v, time.gmtime())
 
 	for mail, url in config['feeds'].items():
+		newevents[mail] = events.setdefault(mail, {})
+
 		icsfeed, err = exec(config['cmd']['download'] + [url])
 		if err != '':
 			logFeed('download', mail, url, err.strip())
+			continue
 		try:
 			err = icsfeed.replace('\n', ' ')
 			icsfeed = imcToDict(icsfeed)
 			icsfeed = icsfeed['vcalendar'][0]
 		except Exception as e:
 			logFeed('parse', mail, url, err[0:48])
-			if mail in events:
-				newevents[mail] = events[mail]
 			continue
 
 		logFeed('ok', mail, url)
 		templatevars['mail_to'] = mail
-
-		icsfile = {'vevent': []}
-		icsfile.update(icsfeed)
-		del icsfile['vevent']
-
-		tocancel = { uid: True for uid in events[mail].keys() } if mail in events else {}
+		icsfile = icsfeed
+		tocancel = { uid: True for uid in events[mail].keys() }
 		newevents[mail] = {}
 
-		for event in icsfeed.get('vevent', []):
+		for event in icsfeed.pop('vevent', []):
 
 			uid = event[config.get('uid', 'uid')]
 
 			if event['dtstart'] < templatevars['dtstartfilter']:
 				continue # event in the past
 
-			if mail in events and uid in events[mail]:
+			if uid in events[mail]:
 				del tocancel[uid]
 				newevents[mail][uid] = events[mail][uid]
+
 				issame = True
 				for k in config.get('compare', []):
 					issame = issame and events[mail][uid][k] == event[k]
@@ -88,8 +86,7 @@ def main(config: dict):
 
 		for uid in tocancel.keys():
 
-			event = {}
-			event.update(events[mail][uid])
+			event = events[mail][uid].copy()
 
 			icsfile['method'] = 'CANCEL'
 			icsfile['vevent'] = [ event ]
