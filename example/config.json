@@ -1,6 +1,8 @@
 {
 	"events": "events.json",
-	"dtstartfilter": "%Y%m%d",
+	"filter": {
+		"dtstart": { "op": ">", "value": "%Y%m%d" }
+	},
 	"uid": "uid",
 	"cmd": {
 		"sendmail": ["tee", "-a", "output.eml"],

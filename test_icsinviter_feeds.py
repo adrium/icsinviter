@@ -11,7 +11,9 @@ class Testing(unittest.TestCase):
 		self.maxDiff = None
 		self.tmpfiles = [ tempfile.mkstemp()[1] for n in range(2) ]
 		self.config = {
-			'dtstartfilter': '2021',
+			'filter': {
+				'dtstart': { 'op': '>', 'value': '2021' },
+			},
 			'cmd': {
 				'sendmail': ['tee', '-a', self.tmpfiles[0]],
 				'download': ['cat'],
@@ -46,15 +48,15 @@ class Testing(unittest.TestCase):
 			'attendee_p': { 'set': { 'rsvp': 'FALSE' } },
 		}
 
-		self.config['dtstartfilter'] = '20211101'
+		self.config['filter']['dtstart']['value'] = '20211101'
 		self.config['feeds'] = { mail: 'testdata/humanity-live-1.ics' }
 		icsinviter.main(self.config)
 
-		self.config['dtstartfilter'] = '20211110'
+		self.config['filter']['dtstart']['value'] = '20211110'
 		self.config['feeds'] = { mail: 'testdata/humanity-live-2.ics' }
 		icsinviter.main(self.config)
 
-		self.config['dtstartfilter'] = '20211120'
+		self.config['filter']['dtstart']['value'] = '20211120'
 		self.config['feeds'] = { mail: 'testdata/humanity-live-3.ics' }
 		icsinviter.main(self.config)
 

@@ -44,7 +44,7 @@ are written to this JSON file.
 The tool removes events:
 
 - After a cancellation is sent
-- If they are considered old (see `dtstartfilter` parameter)
+- If they are filtered (see `filter` parameter)
 - For email addresses without an entry in the `feeds` parameter
 
 Note: The file should be initialized manually with `{}` as content.
@@ -62,15 +62,6 @@ Hint: To temporarily disable a feed, an invalid feed link could be set.
 
 Hint: This parameter could be set in a different configuration file
 for maintenance by another tool.
-
-### dtstartfilter
-
-Filter old events.
-
-The `DTSTART` property of events is string-compared to this value.
-Events with smaller values are considered old and are ignored.
-
-The value is copied into the `var` dict and can be used as time format.
 
 ### cmd
 
@@ -111,7 +102,7 @@ Event key.
 - Events are identified by this property and compared with events in the state file
 - New events in the feed are sent
 - Missing events in the feed are cancelled
-- Old events that are in the past are neither sent nor cancelled
+- Filtered events are neither sent nor cancelled
 
 ### var
 
@@ -119,7 +110,23 @@ Event key.
 
 Static variables for use in the template.
 
-Values containing a `%` are used as a format string for [time.strftime](https://docs.python.org/3/library/time.html#time.strftime).
+Values containing a `%` are used as a format string for [strftime](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
+
+### filter
+
+*Default: {}*
+
+Filter events.
+
+Dictionary of event keys and filters.
+Filters can be specified as dictionary with an operator `op` and a value `value` keys.
+Operator can be: `<` `>` `=` `~` (regex search)
+
+It is recommended to only include events in the future:
+
+`{ "dtstart": { "op": ">", "value": "%Y%m%d" } }`
+
+Values containing a `%` are used as a format string for [strftime](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
 
 ### update
 
@@ -129,6 +136,8 @@ Update event properties.
 
 The dict consists of keys with the name of the event property that should be updated, and update instructions as values.
 The [example/config.json](example/config.json) contains an elaborate example.
+
+The `render` strings containing a `%` are used as a format string for [strftime](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
 
 ### compare
 

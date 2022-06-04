@@ -1,8 +1,8 @@
+from datetime import datetime
 import glob
 import json
 import re
 import subprocess
-import time
 
 def main(config: dict):
 
@@ -11,12 +11,12 @@ def main(config: dict):
 	emlCancel = loadFile(config['template']['cancel'])
 	newevents = {}
 
-	templatevars = config.get('var', {})
-	templatevars['dtstartfilter'] = config['dtstartfilter']
+	filters = replaceTime(config.get('filter', {}), 'value')
+	updates = replaceTime(config.get('update', {}), 'render')
 
-	for k, v in templatevars.items():
-		if '%' in v:
-			templatevars[k] = time.strftime(v, time.gmtime())
+	templatevars = { k: { 'value' : v } for k, v in config.get('var', {}).items() }
+	templatevars = replaceTime(templatevars, 'value')
+	templatevars = { k: v['value'] for k, v in templatevars.items() }
 
 	for mail, url in config['feeds'].items():
 		newevents[mail] = events.setdefault(mail, {})
@@ -43,9 +43,6 @@ def main(config: dict):
 
 			uid = event[config.get('uid', 'uid')]
 
-			if event['dtstart'] < templatevars['dtstartfilter']:
-				continue # event in the past
-
 			if uid in events[mail]:
 				del tocancel[uid]
 				newevents[mail][uid] = events[mail][uid]
@@ -62,7 +59,11 @@ def main(config: dict):
 			icsfile['method'] = 'REQUEST'
 			icsfile['vevent'] = [ event ]
 
-			for k, update in config.get('update', {}).items():
+			if not includeEvent(event, filters):
+				logEvent('ignore', mail, icsfile)
+				continue
+
+			for k, update in updates.items():
 				if 'set' in update:
 					event[k] = update['set']
 				if 'render' in update:
@@ -71,10 +72,6 @@ def main(config: dict):
 					event[k] = re.sub(update['pattern'], update['repl'], event[k], flags = re.S)
 
 			mailtext = render(emlRequest, templatevars, icsfile)
-
-			if mailtext == '':
-				logEvent('ignore', mail, icsfile)
-				continue
 
 			_, err = exec(config['cmd']['sendmail'], mailtext)
 			if err != '':
@@ -94,10 +91,11 @@ def main(config: dict):
 			event['status'] = 'CANCELLED'
 			event['sequence'] = str(1 + int(event.get('sequence', '0')))
 
-			mailtext = render(emlCancel, templatevars, icsfile)
-			if mailtext == '':
+			if not includeEvent(event, filters):
 				logEvent('ignore', mail, icsfile)
 				continue
+
+			mailtext = render(emlCancel, templatevars, icsfile)
 
 			_, err = exec(config['cmd']['sendmail'], mailtext)
 			if err != '':
@@ -109,10 +107,26 @@ def main(config: dict):
 
 	saveJson(config['events'], newevents)
 
-def render(template: str, vars: dict, icsfile: dict) -> str:
-	if (icsfile['vevent'][0]['dtstart'] < vars['dtstartfilter']):
-		return ''
+def replaceTime(vars: dict, subkey: str) -> dict:
+	for k, v in vars.items():
+		if not subkey in v:
+			continue
+		if '%' in v[subkey]:
+			vars[k][subkey] = datetime.utcnow().strftime(v[subkey])
+	return vars
 
+def includeEvent(event: dict, filters: dict) -> bool:
+	result = True
+	for k, p in filters.items():
+		result = \
+			result and event[k] < p['value'] if p['op'] == '<' else \
+			result and event[k] > p['value'] if p['op'] == '>' else \
+			result and event[k] == p['value'] if p['op'] == '=' else \
+			result and re.search(p['value'], event[k]) != None if p['op'] == '~' else \
+			result
+	return result
+
+def render(template: str, vars: dict, icsfile: dict) -> str:
 	v = {}
 	v.update(vars)
 	v.update(icsfile)
