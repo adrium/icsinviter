@@ -24,7 +24,7 @@ Technically, other actions than sending emails could be triggered based on chang
 ## Configuration
 
 The configuration is read from multiple JSON files and the top level keys are merged.
-Files are loaded from `config/*.json` in arbitrary order.
+Files to be loaded are specified as command line parameters.
 
 The configuration can be split into multiple files.
 This allows for example to set permissions on the `cmd` parameters,

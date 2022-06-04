@@ -1,5 +1,4 @@
 from datetime import datetime
-import glob
 import json
 import re
 import subprocess
@@ -154,9 +153,9 @@ def logEvent(error, mail, icsfile, detail = None):
 	print(json.dumps({ 'error': error, 'method': icsfile['method'],
 		'uid': e['uid'], 'dtstart': e['dtstart'], 'summary': e['summary'], 'mail': mail, 'detail': detail }))
 
-def loadConfig(files: str):
+def loadConfig(files: list):
 	result = {}
-	for file in glob.glob(files):
+	for file in files:
 		result.update(loadJson(file))
 	return result
 
@@ -269,4 +268,5 @@ def dictToImc(imcdict: dict, suffix: str = '_p') -> str:
 	return result
 
 if __name__ == '__main__':
-	main(loadConfig('config/*.json'))
+	import sys
+	main(loadConfig(sys.argv[1:]))
