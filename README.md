@@ -21,6 +21,16 @@ Originally created for a team of 150+ people scheduled using humanity.com,
 the tool supports multiple ics feed publishers thanks to a flexible configuration system.
 Technically, other actions than sending emails could be triggered based on changes in the feed.
 
+## Example
+
+You can run the example as follows:
+
+	git clone https://github.com/adrium/icsinviter.git
+	cd icsinviter/example
+	echo '{}' > events.json
+	python ../icsinviter.py config.json
+	less output.eml
+
 ## Configuration
 
 The configuration is read from multiple JSON files and the top level keys are merged.
