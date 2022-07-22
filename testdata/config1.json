@@ -1,0 +1,6 @@
+{
+	"var": {
+		"mail_from": "mailer@example.com",
+		"mail_from_name": "X"
+	}
+}

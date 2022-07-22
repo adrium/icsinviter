@@ -156,7 +156,7 @@ def logEvent(error, mail, icsfile, detail = None):
 def loadConfig(files: list):
 	result = {}
 	for file in files:
-		result.update(loadJson(file))
+		result = merge(result, loadJson(file))
 	return result
 
 def loadJson(file: str) -> dict:
@@ -170,6 +170,12 @@ def saveJson(file: str, x: dict):
 def loadFile(filename: str) -> str:
 	with open(filename) as f:
 		return f.read()
+
+def merge(d1: dict, d2: dict) -> dict:
+	return { k: merge(d1[k], d2[k]) \
+		if k in d1 and k in d2 and isinstance(d1[k], dict) and isinstance(d2[k], dict) \
+		else d2[k] if k in d2 else d1[k] \
+		for k in list(d1) + list(d2) }
 
 def imcToDict(imc: str, suffix: str = '_p') -> dict:
 	lines = []
