@@ -58,7 +58,7 @@ def main(config: dict):
 			icsfile['method'] = 'REQUEST'
 			icsfile['vevent'] = [ event ]
 
-			if not includeEvent(event, filters):
+			if not includeEvent(event, filters, 'request'):
 				logEvent('ignore', mail, icsfile)
 				continue
 
@@ -90,7 +90,7 @@ def main(config: dict):
 			event['status'] = 'CANCELLED'
 			event['sequence'] = str(1 + int(event.get('sequence', '0')))
 
-			if not includeEvent(event, filters):
+			if not includeEvent(event, filters, 'cancel'):
 				logEvent('ignore', mail, icsfile)
 				continue
 
@@ -114,9 +114,11 @@ def replaceTime(vars: dict, subkey: str) -> dict:
 			vars[k][subkey] = datetime.utcnow().strftime(v[subkey])
 	return vars
 
-def includeEvent(event: dict, filters: dict) -> bool:
+def includeEvent(event: dict, filters: dict, method: str) -> bool:
 	result = True
 	for k, p in filters.items():
+		if not method in p.get('methods', [method]):
+			continue
 		result = \
 			result and event[k] < p['value'] if p['op'] == '<' else \
 			result and event[k] > p['value'] if p['op'] == '>' else \
