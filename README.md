@@ -33,7 +33,7 @@ You can run the example as follows:
 
 ## Configuration
 
-The configuration is read from multiple JSON files and the top level keys are merged.
+The configuration is read from multiple JSON files and the keys are merged recursively.
 Files to be loaded are specified as command line parameters.
 
 The configuration can be split into multiple files.
@@ -134,7 +134,9 @@ Operator can be: `<` `>` `=` `~` (regex search)
 
 It is recommended to only include events in the future:
 
-`{ "dtstart": { "op": ">", "value": "%Y%m%d" } }`
+`{ "dtstart": { "op": ">", "value": "%Y%m%d", 'methods': ['request','cancel'] } }`
+
+The `methods` parameter is optional.
 
 Values containing a `%` are used as a format string for [strftime](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
 
