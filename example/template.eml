@@ -1,8 +1,8 @@
-From: {mail_from}
+From: {mail_from_name} <{mail_from}>
 To: {mail_to}
 Date: {now_rfc2822}
 Subject: {summary}
-Message-ID: <icsinviter-{now_iso}-{uid}>
+Message-ID: <{uuid}@icsinviter.example.com>
 Content-Type: multipart/alternative; boundary=emlfile
 
 --emlfile

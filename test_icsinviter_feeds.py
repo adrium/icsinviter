@@ -42,10 +42,13 @@ class Testing(unittest.TestCase):
 
 		mail = 'humanity_live@example.com'
 		self.config['compare'] = [ 'dtstart', 'dtend' ]
-		self.config['update'] = {
-			'summary': { 'render': '{description}', 'pattern': r'([\w.-]+).+', 'repl': r'Shift \1' },
-			'attendee': { 'render': 'mailto:{mail_to}' },
-			'attendee_p': { 'set': { 'rsvp': 'FALSE' } },
+		self.config['set'] = {
+			'summary': '{description}',
+			'attendee': 'mailto:{mail_to}',
+			'attendee_p': { 'rsvp': 'FALSE' },
+		}
+		self.config['replace'] = {
+			'summary': { 'pattern': r'([\w.-]+).+', 'repl': r'Shift \1' },
 		}
 
 		self.config['filter']['dtstart']['value'] = '20211101'

@@ -11,15 +11,19 @@
 	},
 	"var": {
 		"mail_from": "mailer@example.com",
-		"now_rfc2822": "%a, %d %b %Y %H:%M:%S +0000",
-		"now_iso": "%Y%m%dT%H%M%S"
+		"mail_from_name": "icsinviter",
+		"now_rfc2822": "%a, %d %b %Y %H:%M:%S +0000"
 	},
 	"compare": [ "dtstart", "dtend" ],
-	"update": {
-		"url": { "render": "{description}", "pattern": "Visit.(http\\S+).*", "repl": "\\1" },
-		"organizer": { "render": "mailto:{mail_from}" },
-		"attendee": { "render": "mailto:{mail_to}" },
-		"attendee_p": { "set": { "rsvp": "FALSE" } }
+	"set": {
+		"url": "{description}",
+		"organizer": "mailto:{mail_from}",
+		"attendee": "mailto:{mail_to}" ,
+		"organizer_p": { "cn": "{mail_from_name}" },
+		"attendee_p": { "rsvp": "FALSE" }
+	},
+	"replace": {
+		"url": { "pattern": "Visit.(http\\S+).*", "repl": "\\1" }
 	},
 	"template": {
 		"request": "template.eml",

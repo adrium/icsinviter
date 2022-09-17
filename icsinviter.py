@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import uuid1
 import json
 import re
 import subprocess
@@ -10,12 +11,13 @@ def main(config: dict):
 	emlCancel = loadFile(config['template']['cancel'])
 	newevents = {}
 
-	filters = replaceTime(config.get('filter', {}), 'value')
-	updates = replaceTime(config.get('update', {}), 'render')
+	config['uuid()'] = lambda: uuid1(0x61647269756d)
+	filters = config.get('filter', {})
+	templatevars = config.get('var', {})
 
-	templatevars = { k: { 'value' : v } for k, v in config.get('var', {}).items() }
-	templatevars = replaceTime(templatevars, 'value')
-	templatevars = { k: v['value'] for k, v in templatevars.items() }
+	now = datetime.utcnow()
+	dictmap(lambda x: now.strftime(x), filters)
+	dictmap(lambda x: now.strftime(x), templatevars)
 
 	for mail, url in config['feeds'].items():
 		newevents[mail] = events.setdefault(mail, {})
@@ -33,7 +35,6 @@ def main(config: dict):
 			continue
 
 		logFeed('ok', mail, url)
-		templatevars['mail_to'] = mail
 		icsfile = icsfeed
 		tocancel = { uid: True for uid in events[mail].keys() }
 		newevents[mail] = {}
@@ -62,15 +63,15 @@ def main(config: dict):
 				logEvent('ignore', mail, icsfile)
 				continue
 
-			for k, update in updates.items():
-				if 'set' in update:
-					event[k] = update['set']
-				if 'render' in update:
-					event[k] = render(update['render'], templatevars, icsfile)
-				if 'pattern' in update:
-					event[k] = re.sub(update['pattern'], update['repl'], event[k], flags = re.S)
+			var = getVars(config['uuid()'], templatevars, mail, icsfile)
+			set = merge({}, config.get('set', {}))
+			dictmap(lambda x: render(x, var), set)
 
-			mailtext = render(emlRequest, templatevars, icsfile)
+			merge(event, set)
+			for k, update in config.get('replace', {}).items():
+				event[k] = re.sub(update['pattern'], update['repl'], event[k], flags = re.S)
+
+			mailtext = render(emlRequest, getVars(config['uuid()'], templatevars, mail, icsfile, True))
 
 			_, err = exec(config['cmd']['sendmail'], mailtext)
 			if err != '':
@@ -82,7 +83,7 @@ def main(config: dict):
 
 		for uid in tocancel.keys():
 
-			event = events[mail][uid].copy()
+			event = merge({}, events[mail][uid])
 
 			icsfile['method'] = 'CANCEL'
 			icsfile['vevent'] = [ event ]
@@ -94,7 +95,7 @@ def main(config: dict):
 				logEvent('ignore', mail, icsfile)
 				continue
 
-			mailtext = render(emlCancel, templatevars, icsfile)
+			mailtext = render(emlCancel, getVars(config['uuid()'], templatevars, mail, icsfile, True))
 
 			_, err = exec(config['cmd']['sendmail'], mailtext)
 			if err != '':
@@ -106,13 +107,13 @@ def main(config: dict):
 
 	saveJson(config['events'], newevents)
 
-def replaceTime(vars: dict, subkey: str) -> dict:
-	for k, v in vars.items():
-		if not subkey in v:
-			continue
-		if '%' in v[subkey]:
-			vars[k][subkey] = datetime.utcnow().strftime(v[subkey])
-	return vars
+def render(template: str, vars: dict) -> str:
+	return template.format(**vars)
+
+def getVars(uuidfn, vars: dict, mail: str, icsfile: dict, withics: bool = False) -> dict:
+	ics = dictToImc({ 'vcalendar': [ icsfile ] }) if withics else ''
+	builtin = { 'mail_to': mail, 'uuid': uuidfn(), 'ics': ics }
+	return merge(merge(merge(merge({}, vars), icsfile), icsfile['vevent'][0]), builtin)
 
 def includeEvent(event: dict, filters: dict, method: str) -> bool:
 	result = True
@@ -125,18 +126,6 @@ def includeEvent(event: dict, filters: dict, method: str) -> bool:
 			result and event[k] == p['value'] if p['op'] == '=' else \
 			result and re.search(p['value'], event[k]) != None if p['op'] == '~' else \
 			result
-	return result
-
-def render(template: str, vars: dict, icsfile: dict) -> str:
-	v = {}
-	v.update(vars)
-	v.update(icsfile)
-	v.update(icsfile['vevent'][0])
-
-	v['ics'] = dictToImc({ 'vcalendar': [ icsfile ] })
-
-	result = template.format(**v)
-
 	return result
 
 def exec(cmd: list, input: str = ''):
@@ -157,8 +146,7 @@ def logEvent(error, mail, icsfile, detail = None):
 
 def loadConfig(files: list):
 	result = {}
-	for file in files:
-		result = merge(result, loadJson(file))
+	for file in files: merge(result, loadJson(file))
 	return result
 
 def loadJson(file: str) -> dict:
@@ -173,11 +161,16 @@ def loadFile(filename: str) -> str:
 	with open(filename) as f:
 		return f.read()
 
+def dictmap(fn, d: dict):
+	for k, v in d.items():
+		if isinstance(v, dict): dictmap(fn, v)
+		else: d[k] = fn(v)
+
 def merge(d1: dict, d2: dict) -> dict:
-	return { k: merge(d1[k], d2[k]) \
-		if k in d1 and k in d2 and isinstance(d1[k], dict) and isinstance(d2[k], dict) \
-		else d2[k] if k in d2 else d1[k] \
-		for k in list(d1) + list(d2) }
+	for k, v in d2.items():
+		if isinstance(d2[k], dict) and isinstance(d1.setdefault(k, {}), dict): merge(d1[k], d2[k])
+		else: d1[k] = d2[k]
+	return d1
 
 def imcToDict(imc: str, suffix: str = '_p') -> dict:
 	lines = []
