@@ -59,7 +59,7 @@ def main(config: dict):
 			icsfile['method'] = 'REQUEST'
 			icsfile['vevent'] = [ event ]
 
-			if not includeEvent(event, filters, 'request'):
+			if not includeEvent(event, filters, icsfile['method']):
 				logEvent('ignore', mail, icsfile)
 				continue
 
@@ -91,7 +91,7 @@ def main(config: dict):
 			event['status'] = 'CANCELLED'
 			event['sequence'] = str(1 + int(event.get('sequence', '0')))
 
-			if not includeEvent(event, filters, 'cancel'):
+			if not includeEvent(event, filters, icsfile['method']):
 				logEvent('ignore', mail, icsfile)
 				continue
 
@@ -116,17 +116,13 @@ def getVars(uuidfn, vars: dict, mail: str, icsfile: dict, withics: bool = False)
 	return merge(merge(merge(merge({}, vars), icsfile), icsfile['vevent'][0]), builtin)
 
 def includeEvent(event: dict, filters: dict, method: str) -> bool:
-	result = True
 	for k, p in filters.items():
-		if not method in p.get('methods', [method]):
-			continue
-		result = \
-			result and event[k] < p['value'] if p['op'] == '<' else \
-			result and event[k] > p['value'] if p['op'] == '>' else \
-			result and event[k] == p['value'] if p['op'] == '=' else \
-			result and re.search(p['value'], event[k]) != None if p['op'] == '~' else \
-			result
-	return result
+		if not method.lower() in p.get('methods', [method.lower()]): continue
+		if p['op'] == '<' and not event[k] < p['value']: return False
+		if p['op'] == '>' and not event[k] > p['value']: return False
+		if p['op'] == '=' and not event[k] == p['value']: return False
+		if p['op'] == '~' and re.search(p['value'], event[k]) == None: return False
+	return True
 
 def exec(cmd: list, input: str = ''):
 	pipe = subprocess.PIPE
