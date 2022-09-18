@@ -64,9 +64,7 @@ Note: The file should be initialized manually with `{}` as content.
 Mapping of configured email addresses to feed links.
 
 Events and updates of the feed are sent to the respective email address.
-
-- The `mail_to` template variable is set accordingly (see `var` dict)
-- The tool will keep events of unavailable or invalid feeds
+The tool will keep events of unavailable or invalid feeds.
 
 Hint: To temporarily disable a feed, an invalid feed link could be set.
 
@@ -120,6 +118,12 @@ Event key.
 
 Static variables for use in the template.
 
+Built-in variables are:
+
+- `mail_to` contains the email address associated with the feed
+- `uuid` a UUID that is generated for every render operation
+- `ics` the ics file
+
 Values containing a `%` are used as a format string for [strftime](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
 
 ### filter
@@ -128,8 +132,8 @@ Values containing a `%` are used as a format string for [strftime](https://docs.
 
 Filter events.
 
-Dictionary of event keys and filters.
-Filters can be specified as dictionary with an operator `op` and a value `value` keys.
+The dict consists of event keys and filters.
+Filters can be specified as dict with an operator `op` and a value `value` keys.
 Operator can be: `<` `>` `=` `~` (regex search)
 
 It is recommended to only include events in the future:
@@ -140,16 +144,23 @@ The `methods` parameter is optional.
 
 Values containing a `%` are used as a format string for [strftime](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
 
-### update
+### set
 
 *Default: {}*
 
 Update event properties.
 
-The dict consists of keys with the name of the event property that should be updated, and update instructions as values.
-The [example/config.json](example/config.json) contains an elaborate example.
+The dict consists of keys and values with the name of the event property that should be updated.
+Values are interpolated in the same way as templates.
 
-The `render` strings containing a `%` are used as a format string for [strftime](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
+### replace
+
+*Default: {}*
+
+Update event properties.
+
+The dict consists of keys with the name of the event property and a dict containing
+a `pattern` and `repl` key that will be used as parameters for a regex replacement.
 
 ### compare
 
