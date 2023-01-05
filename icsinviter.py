@@ -16,8 +16,9 @@ def main(config: dict):
 	templatevars = config.get('var', {})
 
 	now = datetime.utcnow()
-	dictmap(lambda x: now.strftime(x), filters)
-	dictmap(lambda x: now.strftime(x), templatevars)
+	mystrftime = lambda x: now.strftime(x) if isinstance(x, str) else x
+	dictmap(mystrftime, filters)
+	dictmap(mystrftime, templatevars)
 
 	for mail, url in config['feeds'].items():
 		newevents[mail] = events.setdefault(mail, {})
