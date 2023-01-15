@@ -14,6 +14,8 @@ def main(config: dict):
 	config['uuid()'] = lambda: uuid1(0x61647269756d)
 	filters = config.get('filter', {})
 	templatevars = config.get('var', {})
+	dry = config.get('dry', False)
+	logok = 'dry' if dry else 'ok'
 
 	now = datetime.utcnow()
 	mystrftime = lambda x: now.strftime(x) if isinstance(x, str) else x
@@ -35,7 +37,7 @@ def main(config: dict):
 			logFeed('parse', mail, url, err[0:48])
 			continue
 
-		logFeed('ok', mail, url)
+		logFeed(logok, mail, url)
 		icsfile = icsfeed
 		tocancel = { uid: True for uid in events[mail].keys() }
 		newevents[mail] = {}
@@ -74,12 +76,13 @@ def main(config: dict):
 
 			mailtext = render(emlRequest, getVars(config['uuid()'], templatevars, mail, icsfile, True))
 
-			_, err = exec(config['cmd']['sendmail'], mailtext)
-			if err != '':
-				logEvent('sendmail', mail, icsfile, err.strip())
-				continue
+			if not dry:
+				_, err = exec(config['cmd']['sendmail'], mailtext)
+				if err != '':
+					logEvent('sendmail', mail, icsfile, err.strip())
+					continue
 
-			logEvent('ok', mail, icsfile)
+			logEvent(logok, mail, icsfile)
 			newevents[mail][uid] = event
 
 		for uid in tocancel.keys():
@@ -98,15 +101,17 @@ def main(config: dict):
 
 			mailtext = render(emlCancel, getVars(config['uuid()'], templatevars, mail, icsfile, True))
 
-			_, err = exec(config['cmd']['sendmail'], mailtext)
-			if err != '':
-				logEvent('sendmail', mail, icsfile, err.strip())
-				newevents[mail][uid] = events[mail][uid]
-				continue
+			if not dry:
+				_, err = exec(config['cmd']['sendmail'], mailtext)
+				if err != '':
+					logEvent('sendmail', mail, icsfile, err.strip())
+					newevents[mail][uid] = events[mail][uid]
+					continue
 
-			logEvent('ok', mail, icsfile)
+			logEvent(logok, mail, icsfile)
 
-	saveJson(config['events'], newevents)
+	if not dry:
+		saveJson(config['events'], newevents)
 
 def render(template: str, vars: dict) -> str:
 	return template.format(**vars)

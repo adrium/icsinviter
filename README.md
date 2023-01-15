@@ -44,6 +44,12 @@ A complete example can be found in [example/config.json](example/config.json).
 
 All configuration parameters are described in the following sections.
 
+### dry
+
+*Default: false*
+
+Perform a dry run: Download feeds and detect changes, but do not send any emails, nor update the state file.
+
 ### events
 
 Filename of the state file.
