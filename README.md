@@ -146,6 +146,7 @@ Built-in variables are:
 
 - `mail_to` contains the email address associated with the feed
 - `uuid` a UUID that is generated for every render operation
+- `now` a [datetime](https://docs.python.org/3/library/datetime.html#datetime.datetime) object with the start of the program
 - `ics` the ics file
 
 Values containing a `%` are used as a format string for [strftime](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
@@ -177,6 +178,8 @@ The configuration parameter is a dict with two keys:
 
 The templates are interpolated using [str.format](https://docs.python.org/3/library/stdtypes.html#str.format) and the `var` dict.
 Additionally, all properties of the `VCALENDAR` and `VEVENT` properties are available in the templates.
+
+See [example/template.eml](example/template.eml) for ideas.
 
 ## Parser
 

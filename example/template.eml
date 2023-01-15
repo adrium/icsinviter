@@ -1,6 +1,6 @@
 From: {mail_from_name} <{mail_from}>
 To: {mail_to}
-Date: {now_rfc2822}
+Date: {now:%a, %d %b %Y %H:%M:%S +0000}
 Subject: {summary}
 Message-ID: <{uuid}@icsinviter.example.com>
 Content-Type: multipart/alternative; boundary=emlfile
@@ -8,7 +8,8 @@ Content-Type: multipart/alternative; boundary=emlfile
 --emlfile
 Content-Type: text/plain; charset=utf-8
 
-{summary}
+{organizer+param[cn]} sent an event:
+
 {description}
 
 --emlfile

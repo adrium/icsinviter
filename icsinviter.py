@@ -67,7 +67,7 @@ def main(config: dict):
 				logEvent('ignore', mail, icsfile)
 				continue
 
-			var = getVars(config['uuid()'], templatevars, mail, icsfile)
+			var = getVars(templatevars, config['uuid()'], now, mail, icsfile)
 			set = util.merge({}, config.get('set', {}))
 			util.dictmap(lambda x: render(x, var), set)
 
@@ -75,7 +75,7 @@ def main(config: dict):
 			for k, update in config.get('replace', {}).items():
 				event[k] = re.sub(update['pattern'], update['repl'], event[k], flags = re.S)
 
-			mailtext = render(emlRequest, getVars(config['uuid()'], templatevars, mail, icsfile, True))
+			mailtext = render(emlRequest, getVars(templatevars, config['uuid()'], now, mail, icsfile, True))
 
 			if not dry:
 				_, err = util.exec(config['cmd']['sendmail'], mailtext)
@@ -100,7 +100,7 @@ def main(config: dict):
 				logEvent('ignore', mail, icsfile)
 				continue
 
-			mailtext = render(emlCancel, getVars(config['uuid()'], templatevars, mail, icsfile, True))
+			mailtext = render(emlCancel, getVars(templatevars, config['uuid()'], now, mail, icsfile, True))
 
 			if not dry:
 				_, err = util.exec(config['cmd']['sendmail'], mailtext)
@@ -117,9 +117,9 @@ def main(config: dict):
 def render(template: str, vars: dict) -> str:
 	return template.format(**vars)
 
-def getVars(uuidfn, vars: dict, mail: str, icsfile: dict, withics: bool = False) -> dict:
+def getVars(vars: dict, uuidfn, now: datetime, mail: str, icsfile: dict, withics: bool = False) -> dict:
 	ics = imc.fromDict({ 'vcalendar': [ icsfile ] }) if withics else ''
-	builtin = { 'mail_to': mail, 'uuid': uuidfn(), 'ics': ics }
+	builtin = { 'mail_to': mail, 'now': now, 'uuid': uuidfn(), 'ics': ics }
 	return util.merge(util.merge(util.merge(util.merge({}, vars), icsfile), icsfile['vevent'][0]), builtin)
 
 def includeEvent(event: dict, filters: dict, method: str) -> bool:
