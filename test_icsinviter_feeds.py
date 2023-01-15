@@ -2,7 +2,7 @@ import icsinviter
 import os
 import unittest
 import tempfile
-import testdata.helper
+import util
 
 class Testing(unittest.TestCase):
 
@@ -24,7 +24,7 @@ class Testing(unittest.TestCase):
 				'cancel': 'testdata/template.txt',
 			},
 		}
-		testdata.helper.saveFile(self.config['events'], '{}')
+		util.saveFile(self.config['events'], '{}')
 
 	def tearDown(self):
 
@@ -65,7 +65,7 @@ class Testing(unittest.TestCase):
 
 		self.assertOutput('testdata/humanity-live-result.txt')
 
-		events = testdata.helper.loadJson(self.config['events'])
+		events = util.loadJson(self.config['events'])
 
 		self.assertEqual(len(events[mail]), 1)
 		self.assertIn('773212438.humanity.com', events[mail])
@@ -122,6 +122,6 @@ class Testing(unittest.TestCase):
 
 	def assertOutput(self, fn):
 
-		expected = testdata.helper.loadFile(fn)
-		result = testdata.helper.loadFile(self.tmpfiles[0])
+		expected = util.loadFile(fn)
+		result = util.loadFile(self.tmpfiles[0])
 		self.assertEqual(result, expected)

@@ -183,8 +183,8 @@ Additionally, all properties of the `VCALENDAR` and `VEVENT` properties are avai
 The included parser can be used seperately:
 
 ```python
-icsinviter.imcToDict(imc, suffix = '_p')
-icsinviter.dictToImc(imcdict, suffix = '_p')
+imc.toDict(imc)
+imc.fromDict(imcdict)
 ```
 
 IMC stands for Internet Mail Consortium, the original creators of the iCalendar and vCard formats.
