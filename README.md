@@ -97,16 +97,6 @@ Email delivery shell command.
 - Receives the content of the email on `stdin`
 - `stdout` is ignored
 
-### template
-
-Templates for sending emails.
-
-The configuration parameter is a dict with two keys:
-`request` and `cancel` and a filename as value.
-
-The templates are interpolated using [str.format](https://docs.python.org/3/library/stdtypes.html#str.format) and the `var` dict.
-Additionally, all properties of the `VCALENDAR` and `VEVENT` properties are available in the templates.
-
 ### uid
 
 *Default: "uid"*
@@ -117,20 +107,6 @@ Event key.
 - New events in the feed are sent
 - Missing events in the feed are cancelled
 - Filtered events are neither sent nor cancelled
-
-### var
-
-*Default: {}*
-
-Static variables for use in the template.
-
-Built-in variables are:
-
-- `mail_to` contains the email address associated with the feed
-- `uuid` a UUID that is generated for every render operation
-- `ics` the ics file
-
-Values containing a `%` are used as a format string for [strftime](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
 
 ### filter
 
@@ -147,6 +123,30 @@ It is recommended to only include events in the future:
 `{ "dtstart": { "op": ">", "value": "%Y%m%d", 'methods': ['request','cancel'] } }`
 
 The `methods` parameter is optional.
+
+Values containing a `%` are used as a format string for [strftime](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
+
+### compare
+
+*Default: []*
+
+Detect event updates.
+
+Compare the listed properties and send an event update, if any of those changed.
+
+Note: Comparison should not be done using updated properties.
+
+### var
+
+*Default: {}*
+
+Static variables for use in the template.
+
+Built-in variables are:
+
+- `mail_to` contains the email address associated with the feed
+- `uuid` a UUID that is generated for every render operation
+- `ics` the ics file
 
 Values containing a `%` are used as a format string for [strftime](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior).
 
@@ -168,15 +168,15 @@ Update event properties.
 The dict consists of keys with the name of the event property and a dict containing
 a `pattern` and `repl` key that will be used as parameters for a regex replacement.
 
-### compare
+### template
 
-*Default: []*
+Templates for sending emails.
 
-Detect event updates.
+The configuration parameter is a dict with two keys:
+`request` and `cancel` and a filename as value.
 
-Compare the listed properties and send an event update, if any of those changed.
-
-Note: Comparison should not be done using updated properties.
+The templates are interpolated using [str.format](https://docs.python.org/3/library/stdtypes.html#str.format) and the `var` dict.
+Additionally, all properties of the `VCALENDAR` and `VEVENT` properties are available in the templates.
 
 ## Parser
 
