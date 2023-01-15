@@ -1,4 +1,4 @@
-def toDict(imc: str, suffix: str = '_p') -> dict:
+def toDict(imc: str, suffix: str = '+param') -> dict:
 	mkkey = lambda s: s.lower().replace('-', '_')
 	result = { 'LAST:END': True }
 	lines = []
@@ -37,7 +37,7 @@ def toDict(imc: str, suffix: str = '_p') -> dict:
 	del result['LAST:END']
 	return result
 
-def fromDict(imcdict: dict, suffix: str = '_p') -> str:
+def fromDict(imcdict: dict, suffix: str = '+param') -> str:
 	mkkey = lambda s: s.upper().replace('_', '-')
 	result = ''
 

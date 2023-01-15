@@ -19,8 +19,8 @@
 		"url": "{description}",
 		"organizer": "mailto:{mail_from}",
 		"attendee": "mailto:{mail_to}" ,
-		"organizer_p": { "cn": "{mail_from_name}" },
-		"attendee_p": { "rsvp": "FALSE" }
+		"organizer+param": { "cn": "{mail_from_name}" },
+		"attendee+param": { "rsvp": "FALSE" }
 	},
 	"replace": {
 		"url": { "pattern": "Visit.(http\\S+).*", "repl": "\\1" }

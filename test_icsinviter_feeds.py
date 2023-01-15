@@ -45,7 +45,7 @@ class Testing(unittest.TestCase):
 		self.config['set'] = {
 			'summary': '{description}',
 			'attendee': 'mailto:{mail_to}',
-			'attendee_p': { 'rsvp': 'FALSE' },
+			'attendee+param': { 'rsvp': 'FALSE' },
 		}
 		self.config['replace'] = {
 			'summary': { 'pattern': r'([\w.-]+).+', 'repl': r'Shift \1' },

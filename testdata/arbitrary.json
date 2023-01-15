@@ -4,7 +4,7 @@
   "long": "start:\nlongline longline longline longline longline longline longline longline longline longline",
   "test_overwrite": "Val",
   "test_param": "Hello",
-  "test_param_p": { "param": "OK" },
+  "test_param+param": { "param": "OK" },
   "sub": [
    { "x": "X" },
    { "x": "Y" }
