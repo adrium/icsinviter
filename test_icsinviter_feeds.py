@@ -73,7 +73,7 @@ class Testing(unittest.TestCase):
 	def testFeedDoodle(self):
 
 		mail = 'doodle@example.com'
-		self.config['compare'] = [ 'x-microsoft-cdo-busystatus' ]
+		self.config['compare'] = [ 'x_microsoft_cdo_busystatus' ]
 
 		self.config['feeds'] = { mail: 'testdata/doodle-tentative.ics' }
 		icsinviter.main(self.config)
@@ -104,7 +104,7 @@ class Testing(unittest.TestCase):
 		testcmds.insert(0, { 'download': ['sh', '-c', 'echo GARBAGE'] })
 		testcmds.insert(0, { 'download': ['sh', '-c', 'echo DLERROR 1>&2'] })
 
-		self.config['compare'] = [ 'x-microsoft-cdo-busystatus' ]
+		self.config['compare'] = [ 'x_microsoft_cdo_busystatus' ]
 
 		self.config['feeds'] = { mail: 'testdata/doodle-tentative.ics' }
 

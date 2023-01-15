@@ -17,7 +17,7 @@ class Testing(unittest.TestCase):
 		input = util.loadJson('testdata/arbitrary.json')
 		expected = util.loadFile('testdata/arbitrary.ics')
 
-		expected = expected.replace('TEST:Missing\n', '')
+		expected = expected.replace('TEST-OVERWRITE;TYPE=Str:Missing\n', '')
 
 		result = imc.fromDict(input)
 		self.assertEqual(result, expected)

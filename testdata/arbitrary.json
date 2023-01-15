@@ -2,8 +2,9 @@
  "object": [ {
   "foo": "BAR",
   "long": "start:\nlongline longline longline longline longline longline longline longline longline longline",
-  "test": "Val",
-  "test_p": { "type": "Str" },
+  "test_overwrite": "Val",
+  "test_param": "Hello",
+  "test_param_p": { "param": "OK" },
   "sub": [
    { "x": "X" },
    { "x": "Y" }

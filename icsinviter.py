@@ -35,7 +35,7 @@ def main(config: dict):
 			icsfeed = imc.toDict(icsfeed)
 			icsfeed = icsfeed['vcalendar'][0]
 		except Exception as e:
-			logFeed('parse', mail, url, err[0:48])
+			logFeed('parse', mail, url, repr(e) + ' for ' + err[0:48])
 			continue
 
 		logFeed(logok, mail, url)

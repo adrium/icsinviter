@@ -1,90 +1,65 @@
 def toDict(imc: str, suffix: str = '_p') -> dict:
+	mkkey = lambda s: s.lower().replace('-', '_')
+	result = { 'LAST:END': True }
 	lines = []
-	line = ''
 
-	for fileline in reversed(imc.split('\n')):
-		fileline = fileline.replace('\r', '')
-
+	for fileline in imc.split('\n'):
 		if fileline[0:1] in [' ', '\t']:
-			line = fileline[1:] + line
-			continue
+			fileline = lines.pop() + fileline[1:]
+		if fileline != '':
+			lines.append(fileline)
 
-		line = fileline + line
-
-		if line == '':
-			continue
-
+	for line in lines:
 		k, v = line.split(':', maxsplit = 1)
-		v = v.replace('\\n', '\n')
-		p = k.split(';')
-		k = p[0].lower()
-		p = { pk.lower(): pv for ps in p[1:] for pk, pv in [ ps.split('=', maxsplit = 1) ] }
+		k, *p = k.split(';')
+		v = v.replace('\\n', '\n').replace('\r', '')
+		x = f'END:{v}'
 
-		lines += [(k, v, p)]
-		line = ''
+		if k == 'BEGIN':
+			new = { x: result }
+			result.setdefault(mkkey(v), []).append(new)
+			result = new
+			continue
 
-	lines.reverse()
+		if k == 'END':
+			result = result.pop(x)
+			continue
 
-	result = imcToDictTreeImpl(None, suffix, iter(lines))
-	return result
+		k = mkkey(k)
+		x = k + suffix
+		p = { mkkey(pk): pv for ps in p for pk, pv in [ ps.split('=', maxsplit = 1) ] }
+		result[k] = v
+		result[x] = p
 
-def imcToDictTreeImpl(scope: str, suffix: str, it) -> dict:
-	result = {}
+		if result[x] == {}:
+			del result[x]
 
-	while (x := next(it, None)) != None:
-
-		k, v, p = x
-
-		if k == 'begin':
-			k = v.lower()
-			v = imcToDictTreeImpl(k, suffix, it)
-
-			if not k in result:
-				result[k] = []
-
-			result[k] += [v]
-
-		elif k == 'end':
-			k = v.lower()
-
-			if scope != k:
-				raise TypeError('Invalid nesting')
-
-			return result
-
-		else:
-			result[k] = v
-			if p != {}:
-				result[k + suffix] = p
-
-	if scope != None:
-		raise TypeError('Missing END tag')
-
+	del result['LAST:END']
 	return result
 
 def fromDict(imcdict: dict, suffix: str = '_p') -> str:
-
+	mkkey = lambda s: s.upper().replace('_', '-')
 	result = ''
 
 	for k, v in imcdict.items():
 		if k.endswith(suffix):
 			continue
 
+		x = k + suffix
+		k = mkkey(k)
+
 		if isinstance(v, list):
-			for d in v:
-				result += f'BEGIN:{k.upper()}\n'
-				result += dictToImc(d)
-				result += f'END:{k.upper()}\n'
+			for item in v:
+				result += f'BEGIN:{k}\n'
+				result += fromDict(item, suffix)
+				result += f'END:{k}\n'
 			continue
 
-		p = imcdict[k + suffix] if k + suffix in imcdict else {}
 		v = v.replace('\n', '\\n')
-		k = k.upper()
-
-		for pk, pv in p.items():
-			k += f';{pk.upper()}={pv}'
-
-		line = f'{k}:{v}'
+		p = imcdict.get(x, {})
+		p = [ '='.join([ mkkey(pk), pv ]) for pk, pv in p.items() ]
+		line = ';'.join([ k ] + p)
+		line = ':'.join([ line, v ])
 
 		while len(line) > 64:
 			result += line[0:64] + '\n'
