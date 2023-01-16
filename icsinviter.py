@@ -16,7 +16,7 @@ def main(config: dict):
 	filters = config.get('filter', {})
 	templatevars = config.get('var', {})
 	dry = config.get('dry', False)
-	logok = 'dry' if dry else 'ok'
+	okordry = 'dry' if dry else 'ok'
 
 	now = datetime.utcnow()
 	mystrftime = lambda x: now.strftime(x) if isinstance(x, str) else x
@@ -28,17 +28,17 @@ def main(config: dict):
 
 		icsfeed, err = util.exec(config['cmd']['download'] + [url])
 		if err != '':
-			logFeed('download', mail, url, err.strip())
+			logFeed('download-error', mail, url, err.strip())
 			continue
 		try:
 			err = icsfeed.replace('\n', ' ')
 			icsfeed = imc.toDict(icsfeed)
 			icsfeed = icsfeed['vcalendar'][0]
 		except Exception as e:
-			logFeed('parse', mail, url, repr(e) + ' for ' + err[0:48])
+			logFeed('parse-error', mail, url, repr(e) + ' for ' + err[0:48])
 			continue
 
-		logFeed(logok, mail, url)
+		logFeed(okordry, mail, url)
 		icsfile = icsfeed
 		tocancel = { uid: True for uid in events[mail].keys() }
 		newevents[mail] = {}
@@ -46,6 +46,8 @@ def main(config: dict):
 		for event in icsfeed.pop('vevent', []):
 
 			uid = event[config.get('uid', 'uid')]
+			icsfile['method'] = 'REQUEST'
+			icsfile['vevent'] = [ event ]
 
 			if uid in events[mail]:
 				del tocancel[uid]
@@ -55,13 +57,11 @@ def main(config: dict):
 				for k in config.get('compare', []):
 					issame = issame and events[mail][uid][k] == event[k]
 				if issame:
-					continue # event already synchronized
+					logEvent('nochange', mail, icsfile)
+					continue
 				else:
 					event['uid'] = events[mail][uid]['uid']
 					event['sequence'] = str(1 + int(events[mail][uid].get('sequence', '0')))
-
-			icsfile['method'] = 'REQUEST'
-			icsfile['vevent'] = [ event ]
 
 			if not includeEvent(event, filters, icsfile['method']):
 				logEvent('ignore', mail, icsfile)
@@ -80,10 +80,10 @@ def main(config: dict):
 			if not dry:
 				_, err = util.exec(config['cmd']['sendmail'], mailtext)
 				if err != '':
-					logEvent('sendmail', mail, icsfile, err.strip())
+					logEvent('sendmail-error', mail, icsfile, err.strip())
 					continue
 
-			logEvent(logok, mail, icsfile)
+			logEvent(okordry, mail, icsfile)
 			newevents[mail][uid] = event
 
 		for uid in tocancel.keys():
@@ -105,11 +105,11 @@ def main(config: dict):
 			if not dry:
 				_, err = util.exec(config['cmd']['sendmail'], mailtext)
 				if err != '':
-					logEvent('sendmail', mail, icsfile, err.strip())
+					logEvent('sendmail-error', mail, icsfile, err.strip())
 					newevents[mail][uid] = events[mail][uid]
 					continue
 
-			logEvent(logok, mail, icsfile)
+			logEvent(okordry, mail, icsfile)
 
 	if not dry:
 		util.saveJson(config['events'], newevents)
@@ -131,12 +131,12 @@ def includeEvent(event: dict, filters: dict, method: str) -> bool:
 		if p['op'] == '~' and re.search(p['value'], event[k]) == None: return False
 	return True
 
-def logFeed(error, mail, url, detail = None):
-	print(json.dumps({ 'error': error, 'url': url, 'mail': mail, 'detail': detail }))
+def logFeed(status, mail, url, detail = None):
+	print(json.dumps({ 'status': status, 'url': url, 'mail': mail, 'detail': detail }))
 
-def logEvent(error, mail, icsfile, detail = None):
+def logEvent(status, mail, icsfile, detail = None):
 	e = icsfile['vevent'][0]
-	print(json.dumps({ 'error': error, 'method': icsfile['method'],
+	print(json.dumps({ 'status': status, 'method': icsfile['method'],
 		'uid': e['uid'], 'dtstart': e['dtstart'], 'summary': e['summary'], 'mail': mail, 'detail': detail }))
 
 if __name__ == '__main__':
